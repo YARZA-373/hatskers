@@ -73,8 +73,9 @@ def patch_exe(data: bytes, new_password: str):
 
 def restore_exe(data: bytes):
     load_dotenv()
-    default_password = os.environ["DEFAULT_PASSWORD"]
-    patch_exe(data, default_password)
+    default_password = "password123"
+    data = patch_exe(data, default_password)
+    return data
 
 
 if __name__ == '__main__':
