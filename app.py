@@ -1,6 +1,8 @@
 from flask import Flask, request, send_file, render_template
 from io import BytesIO
+from dotenv import load_dotenv
 import re
+import os
 
 app = Flask(__name__)
 BYTE_BLOCKS_AMOUNT = 3
@@ -61,29 +63,18 @@ def patch_exe(data: bytes, new_password: str):
     b += b'\x00'
     n = 4
     chunks = [b[i:i + n] for i in range(0, len(b), n)]
-    print([b for b in data[positions[0]:positions[0] + 8]])
-    print([b for b in data[positions[1]:positions[1] + 8]])
-    print([b for b in data[positions[2]:positions[2] + 8]])
     for i in range(len(chunks)):
         for j in range(len(chunks[i])):
             data[positions[i] + n + j] = chunks[i][j]
-    print(chunks)
-    # for i in range(3):
-    #
-    # for chunk in chunks:
-    #     for j in range(len(chunk)):
-    #         data[positions[0] + n + j] = chunk[j]
-    print([b for b in data[positions[0]:positions[0] + 8]])
-    print([b for b in data[positions[1]:positions[1] + 8]])
-    print([b for b in data[positions[2]:positions[2] + 8]])
 
     data = bytes(data)
     return data
 
 
-def restore_exe(data: bytes) -> bytes:
-    # TODO: здесь будет логика отката (сравнение и восстановление)
-    return data
+def restore_exe(data: bytes):
+    load_dotenv()
+    default_password = os.environ["DEFAULT_PASSWORD"]
+    patch_exe(data, default_password)
 
 
 if __name__ == '__main__':
