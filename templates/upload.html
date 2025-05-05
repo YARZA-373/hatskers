@@ -6,13 +6,42 @@
 </head>
 <body>
     <h1>Загрузите исполняемый файл</h1>
+    <input type="file" name="exe_file" onchange="autoUpload(this.files[0])" required><br><br>
     <form id="pForm" method="post" enctype="multipart/form-data">
-        <input type="file" name="exe_file" required><br><br>
         <input type="text" maxlength="11" name="new_password"><br><br>
         <button type="submit" name="action" value="patch">Пропатчить</button>
         <button type="submit" name="action" value="restore">Откатить</button>
-        <button type="submit" name="action" value="find password">Узнать пароль</button>
     </form>
+    <button onclick="loadNumber()" name="action" value="find password">Узнать пароль</button>
+
+    <p>Пароль от программы: <span id="output">...</span></p>
+    <script>
+    function loadNumber() {
+        fetch('/get_number')
+          .then(response => response.json())
+          .then(data => {
+              document.getElementById('output').textContent = data.value;
+          });
+    }
+    </script>
+
+
+    <script>
+    function autoUpload(file) {
+        const formData = new FormData();
+        formData.append('exe_file', file);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            console.log('Ответ:', data);
+            document.getElementById('result').textContent = data.value;
+        });
+    }
+    </script>
 
 
     {% if found_password %}

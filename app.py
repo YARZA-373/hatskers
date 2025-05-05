@@ -5,16 +5,15 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 app.secret_key = 'verysecret'
 BYTE_BLOCKS_AMOUNT = 3
+bdata = b""
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        file = request.files['exe_file']
         new_password = request.form['new_password']
-        data = file.read()
+        data = bdata
         action = request.form.get('action')
 
-        session['data'] = data
 
         if action == 'patch':
             result_data = patch_exe(data, new_password)
@@ -38,6 +37,23 @@ def upload_file():
 
     return render_template('upload.html')
 
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    global bdata
+    if 'exe_file' not in request.files:
+        return jsonify({'error': 'Файл не получен'}), 400
+
+    file = request.files['exe_file']
+    bdata = file.read()
+
+    return jsonify({})
+
+
+@app.route('/get_number')
+def get_number():
+    password = find_password(bdata)
+    return jsonify({'value': password})
 
 
 def find_password_block(data: bytes, pattern: bytes) -> (list[int], list[str]):
