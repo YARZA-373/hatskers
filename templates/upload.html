@@ -6,11 +6,19 @@
 </head>
 <body>
     <h1>Загрузите исполняемый файл</h1>
-    <form method="post" enctype="multipart/form-data">
+    <form id="pForm" method="post" enctype="multipart/form-data">
         <input type="file" name="exe_file" required><br><br>
-        <input type="text" name="new_password"><br><br>
+        <input type="text" maxlength="11" name="new_password"><br><br>
         <button type="submit" name="action" value="patch">Пропатчить</button>
         <button type="submit" name="action" value="restore">Откатить</button>
+        <button type="submit" name="action" value="find password">Узнать пароль</button>
     </form>
+
+
+    {% if found_password %}
+      <div>
+        <strong>Найденный пароль:</strong> {{ found_password }}
+      </div>
+    {% endif %}
 </body>
 </html>

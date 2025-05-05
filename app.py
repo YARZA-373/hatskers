@@ -1,10 +1,9 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, send_file, render_template, jsonify, redirect, url_for, session
 from io import BytesIO
 from dotenv import load_dotenv
-import re
-import os
 
 app = Flask(__name__)
+app.secret_key = 'verysecret'
 BYTE_BLOCKS_AMOUNT = 3
 
 @app.route('/', methods=['GET', 'POST'])
@@ -15,24 +14,33 @@ def upload_file():
         data = file.read()
         action = request.form.get('action')
 
+        session['data'] = data
+
         if action == 'patch':
             result_data = patch_exe(data, new_password)
+            return send_file(
+                BytesIO(result_data),
+                as_attachment=True,
+                download_name="result.exe"
+            )
         elif action == 'restore':
             result_data = restore_exe(data)
+            return send_file(
+                BytesIO(result_data),
+                as_attachment=True,
+                download_name="result.exe"
+            )
+        elif action == 'find password':
+            password = find_password(data)
+            return render_template('upload.html', found_password=password)
         else:
-            return "Неизвестное действие", 400
-
-
-        return send_file(
-            BytesIO(result_data),
-            as_attachment=True,
-            download_name="result.exe"
-        )
+            return "Unknown action", 400
 
     return render_template('upload.html')
 
 
-def find_password_block(data: bytes, pattern: bytes) -> list[int]:
+
+def find_password_block(data: bytes, pattern: bytes) -> (list[int], list[str]):
     positions = []
     lines = [[-1] * 8]
     i = 0
@@ -53,11 +61,20 @@ def find_password_block(data: bytes, pattern: bytes) -> list[int]:
                 lines.append(context)
                 positions.clear()
                 positions.append(i - 1)
-    return positions
+    return positions, lines
+
+def find_password(data: bytes) -> str:
+    positions, lines = find_password_block(data, b'\xC7\x44\x24')
+    password = lines[0][4:] + lines[1][4:] + lines[2][4:]
+    if (ind := password.find(b'\x00')) != -1:
+        password = password[:ind]
+    password = password.decode('utf-8')
+    return password
+
 
 def patch_exe(data: bytes, new_password: str):
     data = bytearray(data)
-    positions = find_password_block(data, b'\xC7\x44\x24')
+    positions, lines = find_password_block(data, b'\xC7\x44\x24')
 
     b = new_password.encode('utf-8')
     b += b'\x00'
